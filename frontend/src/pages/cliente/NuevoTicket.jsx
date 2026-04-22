@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navbar from '../../components/Navbar'
+import Layout from '../../components/Layout'
+import Icon from '../../components/Icon'
 import api from '../../api/axios'
+
+const PRIORIDAD_OPTIONS = [
+  { value: 'baja', label: 'Baja', description: 'No urgente, puede esperar', color: '#10b981', icon: 'flag' },
+  { value: 'media', label: 'Media', description: 'Requiere atención pronto', color: '#fbbf24', icon: 'flag' },
+  { value: 'alta', label: 'Alta', description: 'Bloquea mi trabajo', color: '#f43f5e', icon: 'alertCircle' },
+]
 
 export default function NuevoTicket() {
   const navigate = useNavigate()
@@ -24,83 +31,185 @@ export default function NuevoTicket() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="max-w-lg mx-auto p-6">
+    <Layout portal="cliente">
+      <div style={{ padding: '28px 32px', maxWidth: 580, margin: '0 auto' }}>
+        {/* Back */}
         <button
           onClick={() => navigate('/cliente/tickets')}
-          className="text-indigo-600 text-sm hover:underline mb-4 block"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 13,
+            color: 'var(--text-secondary)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            marginBottom: 20,
+            padding: '4px 0',
+            transition: 'color 120ms ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
         >
-          ← Volver a mis tickets
+          <Icon name="arrowLeft" size={15} />
+          Volver a mis tickets
         </button>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h1 className="text-xl font-bold text-gray-800 mb-5">Nuevo Ticket de Soporte</h1>
+        <div style={{ marginBottom: 24 }}>
+          <h1
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 800,
+              fontSize: 26,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.03em',
+              marginBottom: 4,
+            }}
+          >
+            Nuevo ticket
+          </h1>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+            Describí tu problema y te vamos a ayudar.
+          </p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 14,
+            padding: '28px 28px',
+          }}
+        >
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+              <label className="label">Título del problema</label>
               <input
                 value={form.titulo}
                 onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Describí brevemente el problema"
+                className="input-base"
+                placeholder="Ej: No puedo acceder a la plataforma"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+              <label className="label">Descripción detallada</label>
               <textarea
                 value={form.descripcion}
                 onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                rows={4}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                placeholder="Detallá el problema con toda la información relevante..."
+                className="textarea-base"
+                placeholder="Describí el problema con todo el detalle posible: qué pasó, cuándo, qué estabas haciendo..."
+                rows={5}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['baja', 'media', 'alta'].map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setForm({ ...form, prioridad: p })}
-                    className={`py-2 rounded-lg text-sm font-semibold border-2 transition-all ${
-                      form.prioridad === p
-                        ? p === 'alta'
-                          ? 'border-red-500 bg-red-50 text-red-600'
-                          : p === 'media'
-                          ? 'border-yellow-500 bg-yellow-50 text-yellow-600'
-                          : 'border-green-500 bg-green-50 text-green-600'
-                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                    }`}
-                  >
-                    {p.charAt(0).toUpperCase() + p.slice(1)}
-                  </button>
-                ))}
+              <label className="label" style={{ marginBottom: 10 }}>Prioridad</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                {PRIORIDAD_OPTIONS.map(({ value, label, description, color }) => {
+                  const selected = form.prioridad === value
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setForm({ ...form, prioridad: value })}
+                      style={{
+                        padding: '14px 12px',
+                        borderRadius: 10,
+                        border: `1.5px solid ${selected ? color : 'var(--border-default)'}`,
+                        background: selected ? `${color}12` : 'var(--bg-base)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 150ms ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: color,
+                            display: 'inline-block',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: selected ? color : 'var(--text-primary)',
+                          }}
+                        >
+                          {label}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.4, margin: 0, paddingLeft: 14 }}>
+                        {description}
+                      </p>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
             {error && (
-              <p className="text-red-500 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '10px 12px',
+                  background: 'var(--danger-muted)',
+                  border: '1px solid rgba(244,63,94,0.2)',
+                  borderRadius: 8,
+                  color: 'var(--danger)',
+                  fontSize: 13,
+                }}
+              >
+                <Icon name="alertCircle" size={14} />
                 {error}
-              </p>
+              </div>
             )}
 
-            <button
-              type="submit"
-              disabled={enviando}
-              className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-            >
-              {enviando ? 'Enviando...' : 'Crear Ticket'}
-            </button>
+            <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
+              <button
+                type="button"
+                onClick={() => navigate('/cliente/tickets')}
+                className="btn-secondary"
+                style={{ flex: 1, justifyContent: 'center' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={enviando}
+                className="btn-primary"
+                style={{ flex: 2, justifyContent: 'center', gap: 7 }}
+              >
+                {enviando ? (
+                  <>
+                    <div style={{ width: 12, height: 12, border: '2px solid rgba(9,9,15,0.3)', borderTopColor: '#09090f', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Icon name="send" size={14} />
+                    Crear ticket
+                  </>
+                )}
+              </button>
+            </div>
           </form>
         </div>
       </div>
-    </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </Layout>
   )
 }

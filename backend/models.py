@@ -14,6 +14,7 @@ class Usuario(db.Model):
     rol = db.Column(db.String(20), nullable=False)  # admin, empleado, cliente
     debe_cambiar_password = db.Column(db.Boolean, default=True, nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    disponibilidad = db.Column(db.String(20), default='disponible', nullable=False)
 
     tickets_como_cliente = db.relationship(
         'Ticket', foreign_keys='Ticket.id_cliente', backref='cliente', lazy=True
@@ -30,6 +31,7 @@ class Usuario(db.Model):
             'rol': self.rol,
             'debe_cambiar_password': self.debe_cambiar_password,
             'fecha_creacion': self.fecha_creacion.isoformat(),
+            'disponibilidad': self.disponibilidad,
         }
 
 

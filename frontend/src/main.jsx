@@ -11,6 +11,7 @@ import AdminDashboard from './pages/admin/Dashboard'
 import GestionUsuarios from './pages/admin/GestionUsuarios'
 import EmpleadoTickets from './pages/empleado/MisTickets'
 import EmpleadoTicketDetalle from './pages/empleado/TicketDetalle'
+import EmpleadoPerfil from './pages/empleado/Perfil'
 import ClienteTickets from './pages/cliente/MisTickets'
 import ClienteNuevoTicket from './pages/cliente/NuevoTicket'
 import ClienteTicketDetalle from './pages/cliente/TicketDetalle'
@@ -36,6 +37,9 @@ createRoot(document.getElementById('root')).render(
           } />
           <Route path="/empleado/tickets/:id" element={
             <ProtectedRoute roles={['empleado']}><EmpleadoTicketDetalle /></ProtectedRoute>
+          } />
+          <Route path="/empleado/perfil" element={
+            <ProtectedRoute roles={['empleado']}><EmpleadoPerfil /></ProtectedRoute>
           } />
 
           <Route path="/cliente/tickets" element={

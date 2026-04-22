@@ -81,20 +81,24 @@ def dashboard():
     )
     conteo_estados = {estado: count for estado, count in estados}
 
-    # Rating promedio por empleado (solo empleados con al menos un feedback)
-    ratings = (
-        db.session.query(
-            Usuario.id,
-            Usuario.nombre,
-            func.avg(Feedback.estrellas).label('promedio'),
-            func.count(Feedback.id).label('total_feedback'),
+    # Todos los empleados con su disponibilidad y rating (si tienen feedback)
+    empleados = Usuario.query.filter_by(rol='empleado').all()
+
+    ratings_map = {
+        r.id: {'promedio': round(float(r.promedio), 2), 'total': r.total_feedback}
+        for r in (
+            db.session.query(
+                Usuario.id,
+                func.avg(Feedback.estrellas).label('promedio'),
+                func.count(Feedback.id).label('total_feedback'),
+            )
+            .join(Ticket, Ticket.id_empleado == Usuario.id)
+            .join(Feedback, Feedback.id_ticket == Ticket.id)
+            .filter(Usuario.rol == 'empleado')
+            .group_by(Usuario.id)
+            .all()
         )
-        .join(Ticket, Ticket.id_empleado == Usuario.id)
-        .join(Feedback, Feedback.id_ticket == Ticket.id)
-        .filter(Usuario.rol == 'empleado')
-        .group_by(Usuario.id)
-        .all()
-    )
+    }
 
     return jsonify({
         'tickets_por_estado': {
@@ -104,12 +108,13 @@ def dashboard():
         },
         'rating_por_empleado': [
             {
-                'id': r.id,
-                'nombre': r.nombre,
-                'promedio': round(float(r.promedio), 2),
-                'total': r.total_feedback,
+                'id': e.id,
+                'nombre': e.nombre,
+                'disponibilidad': e.disponibilidad,
+                'promedio': ratings_map.get(e.id, {}).get('promedio'),
+                'total': ratings_map.get(e.id, {}).get('total', 0),
             }
-            for r in ratings
+            for e in empleados
         ],
     }), 200
 

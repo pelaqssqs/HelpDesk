@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import api from '../api/axios'
 import { useAuth } from '../context/AuthContext'
+import Icon from './Icon'
+
+function formatTime(dateStr) {
+  return new Date(dateStr).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+}
 
 export default function Chat({ ticketId, activo }) {
   const { usuario } = useAuth()
@@ -8,6 +13,7 @@ export default function Chat({ ticketId, activo }) {
   const [texto, setTexto] = useState('')
   const [enviando, setEnviando] = useState(false)
   const bottomRef = useRef(null)
+  const inputRef = useRef(null)
 
   const cargarMensajes = async () => {
     try {
@@ -15,7 +21,7 @@ export default function Chat({ ticketId, activo }) {
       setMensajes(data)
       await api.put(`/tickets/${ticketId}/mensajes/leidos`)
     } catch {
-      // silencioso — el ticket puede cerrarse mientras se pollea
+      // ticket puede cerrarse mientras se pollea
     }
   }
 
@@ -41,30 +47,98 @@ export default function Chat({ ticketId, activo }) {
       console.error('Error al enviar mensaje:', err)
     } finally {
       setEnviando(false)
+      inputRef.current?.focus()
     }
   }
 
   return (
-    <div className="flex flex-col border rounded-xl overflow-hidden bg-gray-50" style={{ height: '380px' }}>
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: 400,
+        background: 'var(--bg-base)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 12,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Messages area */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+        }}
+      >
         {mensajes.length === 0 && (
-          <p className="text-center text-gray-400 text-sm mt-10">
-            {activo ? 'Sin mensajes aún. ¡Empezá la conversación!' : 'Sin mensajes.'}
-          </p>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              color: 'var(--text-tertiary)',
+            }}
+          >
+            <Icon name="chat" size={28} />
+            <p style={{ fontSize: 13 }}>
+              {activo ? 'Sin mensajes aún. ¡Empezá la conversación!' : 'Sin mensajes.'}
+            </p>
+          </div>
         )}
+
         {mensajes.map((m) => {
           const propio = m.id_usuario === usuario.id
           return (
-            <div key={m.id} className={`flex ${propio ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-xs lg:max-w-sm px-3 py-2 rounded-2xl text-sm shadow-sm ${
-                propio ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white text-gray-800 border rounded-bl-sm'
-              }`}>
+            <div
+              key={m.id}
+              style={{
+                display: 'flex',
+                justifyContent: propio ? 'flex-end' : 'flex-start',
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: '72%',
+                  padding: '8px 12px',
+                  borderRadius: propio ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
+                  background: propio ? 'var(--accent)' : 'var(--bg-card)',
+                  border: propio ? 'none' : '1px solid var(--border-default)',
+                  color: propio ? '#09090f' : 'var(--text-primary)',
+                }}
+              >
                 {!propio && (
-                  <p className="text-xs font-semibold mb-1 text-indigo-600">{m.autor_nombre}</p>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      marginBottom: 3,
+                      color: 'var(--accent)',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}
+                  >
+                    {m.autor_nombre}
+                  </p>
                 )}
-                <p className="break-words">{m.contenido}</p>
-                <p className={`text-xs mt-1 text-right ${propio ? 'text-indigo-200' : 'text-gray-400'}`}>
-                  {new Date(m.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                <p style={{ fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word' }}>
+                  {m.contenido}
+                </p>
+                <p
+                  style={{
+                    fontSize: 11,
+                    marginTop: 4,
+                    textAlign: 'right',
+                    opacity: 0.6,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                >
+                  {formatTime(m.fecha)}
                 </p>
               </div>
             </div>
@@ -73,25 +147,53 @@ export default function Chat({ ticketId, activo }) {
         <div ref={bottomRef} />
       </div>
 
+      {/* Input area */}
       {activo ? (
-        <form onSubmit={enviar} className="flex gap-2 p-3 border-t bg-white">
+        <form
+          onSubmit={enviar}
+          style={{
+            display: 'flex',
+            gap: 8,
+            padding: '10px 12px',
+            borderTop: '1px solid var(--border-default)',
+            background: 'var(--bg-card)',
+          }}
+        >
           <input
+            ref={inputRef}
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             placeholder="Escribí un mensaje..."
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             disabled={enviando}
+            className="input-base"
+            style={{ height: 38, fontSize: 14, flex: 1 }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                enviar(e)
+              }
+            }}
           />
           <button
             type="submit"
             disabled={enviando || !texto.trim()}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="btn-primary"
+            style={{ padding: '0 14px', height: 38, flexShrink: 0 }}
           >
-            Enviar
+            <Icon name="send" size={15} />
           </button>
         </form>
       ) : (
-        <div className="p-3 border-t bg-gray-50 text-center text-xs text-gray-400">
+        <div
+          style={{
+            padding: '12px 16px',
+            borderTop: '1px solid var(--border-default)',
+            background: 'var(--bg-card)',
+            textAlign: 'center',
+            fontSize: 12,
+            color: 'var(--text-tertiary)',
+          }}
+        >
           El chat está disponible solo cuando el ticket está en progreso.
         </div>
       )}

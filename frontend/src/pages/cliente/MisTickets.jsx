@@ -1,9 +1,37 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navbar from '../../components/Navbar'
+import Layout from '../../components/Layout'
 import TicketCard from '../../components/TicketCard'
+import Icon from '../../components/Icon'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
+
+function SectionHeader({ label, count, color }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{label}</h2>
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minWidth: 22,
+          height: 22,
+          padding: '0 7px',
+          borderRadius: 99,
+          fontSize: 11,
+          fontWeight: 700,
+          fontFamily: "'JetBrains Mono', monospace",
+          background: `${color}18`,
+          color,
+          border: `1px solid ${color}30`,
+        }}
+      >
+        {count}
+      </span>
+    </div>
+  )
+}
 
 export default function ClienteMisTickets() {
   const { usuario } = useAuth()
@@ -16,8 +44,6 @@ export default function ClienteMisTickets() {
     try {
       const { data } = await api.get('/tickets')
       setTickets(data)
-
-      // Contar mensajes sin leer en tickets en progreso
       const counts = {}
       const enProgreso = data.filter((t) => t.estado === 'en_progreso')
       await Promise.all(
@@ -46,97 +72,140 @@ export default function ClienteMisTickets() {
 
   if (cargando) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="flex items-center justify-center h-64 text-gray-400">Cargando tickets...</div>
-      </div>
+      <Layout portal="cliente">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: 12, color: 'var(--text-tertiary)' }}>
+          <div style={{ width: 32, height: 32, border: '2px solid var(--border-default)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </Layout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">Mis Tickets</h1>
+    <Layout portal="cliente">
+      <div style={{ padding: '28px 32px', maxWidth: 720, margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 28 }}>
+          <div>
+            <h1
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                fontSize: 28,
+                color: 'var(--text-primary)',
+                letterSpacing: '-0.03em',
+                marginBottom: 4,
+              }}
+            >
+              Mis tickets
+            </h1>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+              Seguí el estado de tus solicitudes de soporte.
+            </p>
+          </div>
           <button
             onClick={() => navigate('/cliente/nuevo-ticket')}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+            className="btn-primary"
+            style={{ flexShrink: 0, gap: 7 }}
           >
-            + Nuevo Ticket
+            <Icon name="plus" size={15} />
+            Nuevo ticket
           </button>
         </div>
 
-        {/* Tickets activos */}
-        <section>
-          <h2 className="font-semibold text-gray-600 mb-3 flex items-center gap-2">
-            Activos
-            <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full font-bold">
-              {activos.length}
-            </span>
-          </h2>
-          <div className="space-y-3">
-            {activos.length === 0 && (
-              <p className="text-sm text-gray-400 bg-white rounded-xl border border-gray-100 p-5 text-center">
-                No tenés tickets activos.{' '}
-                <button
-                  onClick={() => navigate('/cliente/nuevo-ticket')}
-                  className="text-indigo-600 hover:underline"
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          {/* Activos */}
+          <section>
+            <SectionHeader label="Activos" count={activos.length} color="#a78bfa" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {activos.length === 0 ? (
+                <div
+                  style={{
+                    padding: '36px 20px',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 12,
+                    textAlign: 'center',
+                    color: 'var(--text-tertiary)',
+                    fontSize: 13,
+                  }}
                 >
-                  Crear uno nuevo
-                </button>
-              </p>
-            )}
-            {activos.map((t) => (
-              <TicketCard
-                key={t.id}
-                ticket={t}
-                mensajesSinLeer={sinLeer[t.id] || 0}
-                onClick={t.estado === 'en_progreso' ? () => navigate(`/cliente/tickets/${t.id}`) : undefined}
-              />
-            ))}
-          </div>
-        </section>
+                  No tenés tickets activos.{' '}
+                  <button
+                    onClick={() => navigate('/cliente/nuevo-ticket')}
+                    style={{ color: '#a78bfa', background: 'none', border: 'none', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline' }}
+                  >
+                    Crear uno nuevo
+                  </button>
+                </div>
+              ) : (
+                activos.map((t) => (
+                  <TicketCard
+                    key={t.id}
+                    ticket={t}
+                    mensajesSinLeer={sinLeer[t.id] || 0}
+                    onClick={t.estado === 'en_progreso' ? () => navigate(`/cliente/tickets/${t.id}`) : undefined}
+                  />
+                ))
+              )}
+            </div>
+          </section>
 
-        {/* Tickets cerrados */}
-        <section>
-          <h2 className="font-semibold text-gray-600 mb-3 flex items-center gap-2">
-            Cerrados
-            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full font-bold">
-              {cerrados.length}
-            </span>
-          </h2>
-          <div className="space-y-3">
-            {cerrados.length === 0 && (
-              <p className="text-sm text-gray-400 text-center">Sin tickets cerrados.</p>
-            )}
-            {cerrados.map((t) => (
-              <TicketCard
-                key={t.id}
-                ticket={t}
-                accion={
-                  <div className="flex gap-2">
-                    {!t.tiene_feedback && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); navigate(`/cliente/feedback/${t.id}`) }}
-                        className="text-xs bg-yellow-400 text-yellow-900 px-2 py-1 rounded-lg hover:bg-yellow-500 transition-colors font-semibold"
-                      >
-                        ★ Feedback
-                      </button>
-                    )}
-                    <button
-                      onClick={(e) => reabrir(e, t.id)}
-                      className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-                    >
-                      Reabrir
-                    </button>
-                  </div>
-                }
-              />
-            ))}
-          </div>
-        </section>
+          {/* Cerrados */}
+          <section>
+            <SectionHeader label="Cerrados" count={cerrados.length} color="var(--text-tertiary)" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {cerrados.length === 0 ? (
+                <p style={{ fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center', padding: '8px 0' }}>
+                  Sin tickets cerrados.
+                </p>
+              ) : (
+                cerrados.map((t) => (
+                  <TicketCard
+                    key={t.id}
+                    ticket={t}
+                    accion={
+                      <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
+                        {!t.tiene_feedback && (
+                          <button
+                            onClick={() => navigate(`/cliente/feedback/${t.id}`)}
+                            style={{
+                              height: 30,
+                              padding: '0 10px',
+                              borderRadius: 7,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              background: 'rgba(251,191,36,0.1)',
+                              color: '#fbbf24',
+                              border: '1px solid rgba(251,191,36,0.2)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 5,
+                              transition: 'background 120ms ease',
+                            }}
+                          >
+                            <Icon name="star" size={11} />
+                            Feedback
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => reabrir(e, t.id)}
+                          className="btn-secondary"
+                          style={{ height: 30, padding: '0 10px', fontSize: 11 }}
+                        >
+                          Reabrir
+                        </button>
+                      </div>
+                    }
+                  />
+                ))
+              )}
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </Layout>
   )
 }
