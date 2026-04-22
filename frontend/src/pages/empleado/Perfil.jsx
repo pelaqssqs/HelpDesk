@@ -3,6 +3,7 @@ import Layout from '../../components/Layout'
 import Icon from '../../components/Icon'
 import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
+import { formatDate } from '../../utils/date'
 
 const PRIORIDAD_COLOR = {
   alta: '#f43f5e',
@@ -387,7 +388,7 @@ export default function EmpleadoPerfil() {
                         </span>
                       </td>
                       <td style={{ padding: '11px 16px', fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontFamily: "'JetBrains Mono', monospace" }}>
-                        {new Date(t.fecha_cierre).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        {formatDate(t.fecha_cierre)}
                       </td>
                       <td style={{ padding: '11px 16px' }}>
                         {t.estrellas !== null ? (

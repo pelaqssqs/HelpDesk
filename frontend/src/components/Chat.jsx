@@ -2,10 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import api from '../api/axios'
 import { useAuth } from '../context/AuthContext'
 import Icon from './Icon'
-
-function formatTime(dateStr) {
-  return new Date(dateStr).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-}
+import { formatTime } from '../utils/date'
 
 export default function Chat({ ticketId, activo }) {
   const { usuario } = useAuth()
