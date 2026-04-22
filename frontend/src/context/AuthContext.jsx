@@ -1,27 +1,26 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 
 const AuthContext = createContext(null)
 
-export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(null)
-  const [cargando, setCargando] = useState(true)
-  const navigate = useNavigate()
+function leerSesion() {
+  try {
+    const token = sessionStorage.getItem('token')
+    const datosUsuario = sessionStorage.getItem('usuario')
+    if (token && datosUsuario) return JSON.parse(datosUsuario)
+  } catch {}
+  return null
+}
 
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    const datosUsuario = localStorage.getItem('usuario')
-    if (token && datosUsuario) {
-      setUsuario(JSON.parse(datosUsuario))
-    }
-    setCargando(false)
-  }, [])
+export function AuthProvider({ children }) {
+  const [usuario, setUsuario] = useState(leerSesion)
+  const navigate = useNavigate()
 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password })
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('usuario', JSON.stringify(data.usuario))
+    sessionStorage.setItem('token', data.token)
+    sessionStorage.setItem('usuario', JSON.stringify(data.usuario))
     setUsuario(data.usuario)
 
     if (data.usuario.debe_cambiar_password) {
@@ -32,15 +31,15 @@ export function AuthProvider({ children }) {
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('usuario')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('usuario')
     setUsuario(null)
     navigate('/login')
   }
 
   const actualizarUsuario = (datos) => {
     const actualizado = { ...usuario, ...datos }
-    localStorage.setItem('usuario', JSON.stringify(actualizado))
+    sessionStorage.setItem('usuario', JSON.stringify(actualizado))
     setUsuario(actualizado)
   }
 
@@ -51,7 +50,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, login, logout, actualizarUsuario, cargando }}>
+    <AuthContext.Provider value={{ usuario, login, logout, actualizarUsuario }}>
       {children}
     </AuthContext.Provider>
   )
